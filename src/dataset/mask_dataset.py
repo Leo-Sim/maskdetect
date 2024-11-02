@@ -68,6 +68,8 @@ class LabelInfo:
 
 
 # Read all xml files located in ../../data/mask/annotations
+# Save all image and label information in 'label_info_list'.
+# An image may have multiple mask labels, so this class handle dataset with 'label_info_list'
 class MaskDataset(Dataset):
     def __init__(self):
         super().__init__()
