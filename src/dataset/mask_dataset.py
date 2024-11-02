@@ -143,18 +143,18 @@ class MaskDataset(Dataset):
         image = Image.open(label_info.path)
         image_label = self.label_mapping[label_info.label]
 
-        xmin = label_info.xmin
-        xmax = label_info.xmax
-        ymin = label_info.ymin
-        ymax = label_info.ymax
+        image_xmin = label_info.xmin
+        image_xmax = label_info.xmax
+        image_ymin = label_info.ymin
+        image_ymax = label_info.ymax
 
-        cropped_image = image.crop((xmin, ymin, xmax, ymax))
+        cropped_image = image.crop((image_xmin, image_xmax, image_ymin, image_ymax))
 
         return cropped_image, image_label
 
 
-if __name__ == '__main__':
-    dataset = MaskDataset()
+# if __name__ == '__main__':
+    # dataset = MaskDataset()
     # dataset._get_xml()
 
 
