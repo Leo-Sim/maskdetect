@@ -67,34 +67,58 @@ class LabelInfo:
         self._ymax = value
 
 
-# Read all xml files located in ../../data/mask/annotations
-# Save all image and label information in 'label_info_list'.
+# Save all image and label information in '_label_info_list'.
 # An image may have multiple mask labels, so this class handle dataset with 'label_info_list'
 class MaskDataset(Dataset):
-    def __init__(self):
+    def __init__(self, directory_path, transform, goal):
         super().__init__()
 
+        self.transform = transform
+
+        self.directory_path = directory_path + os.sep + goal
+        self.label_path = self.directory_path + os.sep + 'annotations'
+        self.image_path = self.directory_path + os.sep + 'images'
+
+
         # map label information to number
-        self.label_mapping = {
+        self._label_mapping = {
             'with_mask': 1,
             'without_mask': 0,
             'mask_weared_incorrect': 0
         }
 
+        self._num_of_classes = len(self._label_mapping)
+
         # label information. it includes label, coordinate of pictures
-        self.label_info_list: List[LabelInfo] = []
+        self._label_info_list: List[LabelInfo] = []
         self._get_xml()
 
-        for a in self.label_info_list:
-            print(a.label)
+    @property
+    def label_mapping(self):
+        """
+        Return Class name - number mapping information
+        :return: Dictionary of class name to number
+        """
+        return self._label_mapping
 
+    @property
+    def num_of_classes(self):
+        """
+        :return: number of classes
+        """
+        return self._num_of_classes
 
     def _get_xml(self):
-        directory_path = '../../data/mask/annotations'
+        """
+        Read all xml label files for images.
+        Retrieve all label information in each image.
+        :return: None
+        """
+
 
         # iterate all files in directory
-        for filename in os.listdir(directory_path):
-            file_path = os.path.join(directory_path, filename)
+        for filename in os.listdir(self.label_path):
+            file_path = os.path.join(self.label_path, filename)
 
             # read all xml files
             if os.path.isfile(file_path) and filename.endswith('.xml'):
@@ -104,6 +128,8 @@ class MaskDataset(Dataset):
                     root = tree.getroot()
 
                     for element in root:
+                        if element.tag == 'filename':
+                            image_path = element.text
 
                         if element.tag == 'object':
 
@@ -129,21 +155,21 @@ class MaskDataset(Dataset):
                                         if bnd_element.tag == 'ymax':
                                             ymax = bnd_element.text
 
-                            labe_info = LabelInfo(file_path, label, xmin, ymin, xmax, ymax)
-                            self.label_info_list.append(labe_info)
+                            labe_info = LabelInfo(image_path, label, xmin, ymin, xmax, ymax)
+                            self._label_info_list.append(labe_info)
 
                 except etree.XMLSyntaxError as e:
                     print(f"Error parsing {file_path}: {e}")
 
     def __len__(self):
-        return len(self.label_info_list)
+        return len(self._label_info_list)
 
     def __getitem__(self, index):
 
-        label_info = self.label_info_list[index]
+        label_info = self._label_info_list[index]
 
-        image = Image.open(label_info.path)
-        image_label = self.label_mapping[label_info.label]
+        image = Image.open(self.image_path + os.sep + label_info.path)
+        image_label = self._label_mapping[label_info.label]
 
         image_xmin = label_info.xmin
         image_xmax = label_info.xmax
@@ -152,7 +178,14 @@ class MaskDataset(Dataset):
 
         cropped_image = image.crop((image_xmin, image_xmax, image_ymin, image_ymax))
 
-        return cropped_image, image_label
+        # if image is RGBA, convert it into RGB
+        if image.mode != "RGB":
+            cropped_image = cropped_image.convert("RGB")
+
+        if self.transform:
+            tensor_image = self.transform(cropped_image)
+
+        return tensor_image, image_label
 
 
 # if __name__ == '__main__':

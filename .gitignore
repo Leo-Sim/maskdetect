@@ -1,5 +1,6 @@
 # created by virtualenv automatically
-.venv/Lib
+.venv
 
-./.idea
 ./venv
+/.idea/
+src/train/lightning_logs

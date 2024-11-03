@@ -1,0 +1,11 @@
+training:
+  batch_size: 64
+  learning_rate: 0.001
+  epoch_num: 1
+  momentum: 0.9
+  image_size: 64,64
+
+# all path starts from project root.
+data:
+  dataset_path1: data/mask/dataset1
+  class_num: 2
