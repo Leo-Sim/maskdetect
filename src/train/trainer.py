@@ -1,6 +1,7 @@
 import sys
 import os
 import lightning as L
+import torch
 
 from torch.utils.data import DataLoader
 
@@ -47,6 +48,10 @@ trainer = L.Trainer(max_epochs=epoch)
 trainer.fit(model, train_dataloaders=train_loader)
 
 trainer.test(model, dataloaders=test_loader)
+
+model_path = 'model.pth'
+
+torch.save(model, model_path)
 
 
 
