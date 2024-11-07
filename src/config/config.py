@@ -52,9 +52,36 @@ class Config:
     def get_dataset_path1(self):
         return self._get_root_absolute_path(self.get_data_config().get('dataset_path1'))
 
+    def get_yolo_config(self):
+        return self.config.get("yolo_training", {})
+
+    def get_yolo_config_batch_size(self):
+        return self.get_yolo_config().get('batch_size', 32)
+
+    def get_yolo_config_learning_rate(self):
+        return self.get_yolo_config().get('learning_rate', 0.001)
+
+    def get_yolo_config_epochs(self):
+        return self.get_yolo_config().get('epoch_num', 10)
+
+    def get_yolo_config_momentum(self):
+        return self.get_yolo_config().get('momentum', 0.9)
+
+    def get_yolo_config_image_size(self):
+        return self.get_yolo_config().get('image_size', (64, 64))
+
+    def get_yolo_config_data(self):
+        return self.get_yolo_config().get('data')
+
+    def get_yolo_config_dataset_path(self):
+        return self._get_root_absolute_path(self.get_yolo_config_data().get('dataset_path'))
+
+
+
     def _get_root_absolute_path(self, relative_path):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
         return os.path.join(base_dir, relative_path)
+
 
 
 config = Config()

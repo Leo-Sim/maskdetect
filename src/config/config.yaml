@@ -1,7 +1,7 @@
 training:
-  batch_size: 64
+  batch_size: 128
   learning_rate: 0.001
-  epoch_num: 1
+  epoch_num: 50
   momentum: 0.9
   image_size: 64,64
 
@@ -9,3 +9,13 @@ training:
 data:
   dataset_path1: data/mask/dataset1
   class_num: 2
+
+
+yolo_training:
+  batch_size: 128
+  learning_rate: 0.001
+  epoch_num: 50
+  momentum: 0.9
+  image_size: 64,64
+  data:
+    dataset_path: data/face
