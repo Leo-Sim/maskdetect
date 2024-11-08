@@ -68,7 +68,7 @@ class LabelInfo:
 
 
 # Save all image and label information in '_label_info_list'.
-# An image may have multiple mask labels, so this class handle dataset with 'label_info_list'
+# An image may have multiple mask labels, so this class handle facedataset with 'label_info_list'
 class MaskDataset(Dataset):
     def __init__(self, directory_path, transform, goal):
         super().__init__()
@@ -161,15 +161,11 @@ class MaskDataset(Dataset):
                 except etree.XMLSyntaxError as e:
                     print(f"Error parsing {file_path}: {e}")
 
-    def __len__(self):
-        return len(self._label_info_list)
-
-    def __getitem__(self, index):
-
-        label_info = self._label_info_list[index]
-
-        image = Image.open(self.image_path + os.sep + label_info.path)
-        image_label = self._label_mapping[label_info.label]
+    def get_cropped_image(self, image, label_info):
+        """
+        :parameter image
+        :parameter label_info: label information
+        """
 
         image_xmin = label_info.xmin
         image_xmax = label_info.xmax
@@ -177,6 +173,19 @@ class MaskDataset(Dataset):
         image_ymax = label_info.ymax
 
         cropped_image = image.crop((image_xmin, image_xmax, image_ymin, image_ymax))
+        return cropped_image
+
+    def __len__(self):
+        return len(self._label_info_list)
+
+
+    def __getitem__(self, index):
+
+        label_info = self._label_info_list[index]
+
+        image = Image.open(self.image_path + os.sep + label_info.path)
+        cropped_image = self.get_cropped_image(image, label_info)
+        image_label = self._label_mapping[label_info.label]
 
         # if image is RGBA, convert it into RGB
         if image.mode != "RGB":
@@ -189,8 +198,8 @@ class MaskDataset(Dataset):
 
 
 # if __name__ == '__main__':
-    # dataset = MaskDataset()
-    # dataset._get_xml()
+    # facedataset = MaskDataset()
+    # facedataset._get_xml()
 
 
 
