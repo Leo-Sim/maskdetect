@@ -1,0 +1,6 @@
+train: C:\ml\maskdetection\mask\data\yolo\train\images
+val: C:\ml\maskdetection\mask\data\yolo\test\images
+
+nc: 2
+
+names: ['face', 'toothbrush' ]

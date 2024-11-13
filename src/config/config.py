@@ -76,16 +76,12 @@ class Config:
     def get_yolo_config_dataset_path(self):
         return self._get_root_absolute_path(self.get_yolo_config_data().get('dataset_path'))
 
+    def get_yolo_config_export_path(self):
+        return self._get_root_absolute_path(self.get_yolo_config_data().get('yolo_format_export_path'))
+
 
 
     def _get_root_absolute_path(self, relative_path):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
         return os.path.join(base_dir, relative_path)
-
-
-
-config = Config()
-print(config.get_batch_size())
-print(config.get_training_config())
-print('ddd   ',config.get_class_num())
 

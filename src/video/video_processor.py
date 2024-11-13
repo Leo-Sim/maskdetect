@@ -17,7 +17,7 @@ video_path = '../../data/video/test.mp4'
 cap = cv2.VideoCapture(video_path)
 
 # Load YOLO
-yolo_model = YOLO('yolo11n.pt')  # Use a YOLO model (e.g., yolov5s.pt for YOLOv5)
+yolo_model = YOLO('../yolo/runs/train/exp_with_new_label8/weights/best.pt')  # Use a YOLO model (e.g., yolov5s.pt for YOLOv5)
 
 mask_model_path = '../train/model.pth'
 mask_model = torch.load(mask_model_path)
@@ -32,13 +32,14 @@ while cap.isOpened():
         break
 
     # put frames in yolo
-    results = yolo_model(frame)  # Pass the frame to the YOLO model
-
+    results = yolo_model(frame, conf=0.5)  # Pass the frame to the YOLO model
+    # print('result : ', results.boxes)
     # Draw bounding boxes around detected objects
     for box in results[0].boxes:
+
         x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
         class_id = int(box.cls[0])  # Detected class ID
-
+        print('class id : ',class_id)
         confidence = float(box.conf[0])  # Confidence score
 
         if class_id == 0:

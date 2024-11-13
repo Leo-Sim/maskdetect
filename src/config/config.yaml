@@ -19,3 +19,4 @@ yolo_training:
   image_size: 64,64
   data:
     dataset_path: data/face
+    yolo_format_export_path: data/yolo
