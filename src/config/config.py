@@ -52,6 +52,12 @@ class Config:
     def get_dataset_path1(self):
         return self._get_root_absolute_path(self.get_data_config().get('dataset_path1'))
 
+    def get_dataset_path2(self):
+        return self._get_root_absolute_path(self.get_data_config().get('dataset_path2'))
+
+    def get_dataset_path3(self):
+        return self._get_root_absolute_path(self.get_data_config().get('dataset_path3'))
+
     def get_yolo_config(self):
         return self.config.get("yolo_training", {})
 
@@ -78,6 +84,10 @@ class Config:
 
     def get_yolo_config_export_path(self):
         return self._get_root_absolute_path(self.get_yolo_config_data().get('yolo_format_export_path'))
+
+    def get_face_data_path(self):
+        face_data = self.config.get("face_data", {})
+        return self._get_root_absolute_path(face_data.get('path'))
 
 
 
