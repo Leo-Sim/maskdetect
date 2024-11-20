@@ -20,9 +20,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="PIL")
 # Dataset for training 'face'
 # Change all labels MaskDataset to 'Face' and add extra face training data
 class FaceDataset(MaskDataset):
-    def __init__(self, face_dataset_path, mask_dataset_path, transform, goal):
+    def __init__(self, face_dataset_path, mask_dataset_path, transform, goal, target_image_size):
         super().__init__(mask_dataset_path, transform, goal)
 
+        self.target_image_size = target_image_size[0]
         self.class_num = 0
 
         self.face_data_full_path = os.path.join(face_dataset_path, goal)
@@ -58,11 +59,12 @@ class FaceDataset(MaskDataset):
 
 
 
-    def export_yolo_train_format(self, export_path):
+    def export_yolo_train_format(self, export_path, face_data_path):
         """
         Export all images and labels as yolo train format
 
         :parameter export_path: path to export images and label
+        :parameter face_data_path: path to labeled face dataset
         :return -> None:
         """
 
@@ -85,45 +87,70 @@ class FaceDataset(MaskDataset):
             print('image alread exist.')
             return
 
+        # store all images' name located in face_data_path in a set
+        labeled_image_path = os.path.join(face_data_path, "images")
+        labeled_image_label_path = os.path.join(face_data_path, "labels")
+
+        labeled_file_names = set(os.listdir(labeled_image_path))
 
         # create label first
 
         # make label with mask dataset for yolo
-        self._make_labels(self.label_path, label_path, '')
+
+
+        if not os.path.isfile(label_path):
+            self._make_labels(self.label_path, label_path)
+            self._make_labels(labeled_image_label_path, label_path)
 
 
         # for mask dataset, crop each face in an image and save it as separate image file
         # for face dataset, copy from original directory
-        for i, label_info in enumerate(self._label_info_list):
 
-            if(i %100 == 1):
-                print(f'......saving image {i},{len(self._label_info_list)}')
 
-            file_name = label_info.path
-            image_target_dir = os.path.join(image_path, file_name)
+        # yolo/train/label 에서 파일이 있을 때, 복사하기
 
-            # save cropped images
-            if file_name.startswith('mak'):
+        # add name of labels in a set
+        label_name_set = set()
+        for label_name in os.listdir(label_path):
+            label_name = label_name.replace(".txt", "")
+            label_name_set.add(label_name)
 
-                full_path = os.path.join(self.mask_data_full_path, file_name)
-                #
-                #-------------------------------------주석풀기 --------------
+
+        print(f"Copying images in {labeled_image_path} to {image_path}" )
+        for image_name in os.listdir(labeled_image_path):
+
+            if(image_name.replace(".png", "").replace(".jpg", "") in label_name_set):
+                full_path = os.path.join(labeled_image_path, image_name)
+                image_target_dir = os.path.join(image_path, image_name)
+                shutil.copy(full_path, image_target_dir)
+
+
+        print(f"Copying images in {self.mask_data_full_path} to {image_path}" )
+
+        for image_name in os.listdir(self.mask_data_full_path):
+
+            if image_name.replace(".png", "") in label_name_set:
+
+                image_target_dir = os.path.join(image_path, image_name)
+                full_path = os.path.join(self.mask_data_full_path, image_name)
+
                 image = Image.open(full_path)
 
+                # Check if the mode is RGB
                 if image.mode != "RGB":
-                    image.save(image_target_dir)
-                    continue
+                    # Convert to RGB and save
+                    image = image.convert("RGB")
 
-                else:
-                    shutil.copy(full_path, image_target_dir)
+                # Save the image
+                image.save(image_target_dir)
 
-    def _make_labels(self, yolo_path, target_path, predefined_label_dir):
+    def _make_labels(self, source_path, target_path):
 
-        pre_defined_label_path = os.path.join(yolo_path, predefined_label_dir)
+        label_list = os.listdir(source_path)
 
-        for filename in os.listdir(pre_defined_label_path):
+        for filename in label_list:
 
-            file_path = os.path.join(pre_defined_label_path, filename)
+            file_path = os.path.join(source_path, filename)
 
             # read all xml files
             if os.path.isfile(file_path) and filename.endswith('.xml'):
@@ -132,10 +159,9 @@ class FaceDataset(MaskDataset):
                     tree = etree.parse(file_path)
                     root = tree.getroot()
 
+                    img_width = None
+                    img_height = None
                     for element in root:
-
-                        img_width = None
-                        img_height = None
 
                         if element.tag == 'filename':
                             file_name = element.text
@@ -144,12 +170,15 @@ class FaceDataset(MaskDataset):
                             if not file_name.endswith('.png'):
                                 continue
 
-                        if element.tag == 'path':
-                            image_path = element.text
-                            image = Image.open(image_path)
-                            img_width, img_height = image.size
+                        if element.tag == 'size':
 
+                            for sub_element in element:
 
+                                if sub_element.tag == 'width':
+                                    img_width = float(sub_element.text)
+
+                                if sub_element.tag == 'height':
+                                    img_height = float(sub_element.text)
 
                         if element.tag == 'object':
 
@@ -174,15 +203,18 @@ class FaceDataset(MaskDataset):
                                         if bnd_element.tag == 'ymax':
                                             ymax = float(bnd_element.text)
 
-                            if img_width is None and img_height is None and file_name.startswith('mak'):
-                                mask_image_path = os.path.join(self.mask_data_full_path, file_name)
-                                _image = Image.open(mask_image_path)
-                                img_width, img_height = _image.size
+                            # do not include low resolution face
+                            min_size = 10
+                            if (xmax - xmin) < min_size or (ymax - ymin < min_size):
+                                continue
 
                             label_line += self.calculate_relative_position(target_path, xmin, ymin, xmax, ymax, img_width, img_height) + '\n'
-                            # label_line = label_line.rstrip("\n")
+
+                    if label_line == "":
+                        continue
 
                     label_file_name = file_name.replace('.png', '')
+                    label_file_name = label_file_name.replace('.jpg', '')
                     with open(target_path + os.sep+ label_file_name + '.txt', 'w') as f:
                         f.write(label_line)
                         # f.write('78 0.5 0.5 1.0 1.0')
