@@ -16,10 +16,9 @@ class Preprocessor:
 
         self.transforms_list = [transforms.Resize(image_size)]
 
-        # transforms.RandomResizedCrop(size=(32, 32), scale=(0.8, 1.0))
+        self.transforms_list.append(transforms.RandomRotation(10),)
         self.transforms_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2))
-        #
-        # self.transforms_list.append(transforms.RandomHorizontalFlip())
+
         self.transforms_list.append(transforms.ToTensor())
         self.transforms_list.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
 

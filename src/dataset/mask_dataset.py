@@ -197,6 +197,53 @@ class MaskDataset(Dataset):
         return tensor_image, image_label
 
 
+
+class MaskDataset2(Dataset):
+    def __init__(self, directory_path, transform, goal):
+        super().__init__()
+        self.transform = transform
+        self.directory_path = directory_path
+
+        self.image_info_list = []
+
+        self.mask_paths = os.path.join(directory_path, goal, "with_mask")
+
+        self.without_mask_path = os.path.join(directory_path, goal, "without_mask")
+
+        self._add_image_path_to_list()
+
+    def _add_image_path_to_list(self):
+
+        # add paths of image with mask to list
+        for image_name in os.listdir(self.mask_paths):
+            image_path = os.path.join(self.mask_paths, image_name)
+            label = "1"
+            self.image_info_list.append(LabelInfo(image_path, label, 0, 0, 0, 0))
+
+        for image_name  in os.listdir(self.without_mask_path):
+            image_path = os.path.join(self.without_mask_path, image_name)
+            label = "0"
+            self.image_info_list.append(LabelInfo(image_path, label, 0, 0, 0, 0))
+
+    def __len__(self):
+        return len(self.image_info_list)
+
+    def __getitem__(self, index):
+
+        label_info = self.image_info_list[index]
+        image = Image.open(label_info.path)
+        label = label_info.label
+
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, int(label)
+
+
+
 # if __name__ == '__main__':
     # facedataset = MaskDataset()
     # facedataset._get_xml()
