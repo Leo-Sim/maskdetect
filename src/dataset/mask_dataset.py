@@ -70,9 +70,9 @@ class LabelInfo:
 # Save all image and label information in '_label_info_list'.
 # An image may have multiple mask labels, so this class handle facedataset with 'label_info_list'
 class MaskDataset(Dataset):
-    def __init__(self, directory_path, transform, goal):
+    def __init__(self, directory_path, transform, goal, image_size):
         super().__init__()
-
+        self.image_size = image_size[0]
         self.transform = transform
 
         self.directory_path = directory_path + os.sep + goal
@@ -143,7 +143,11 @@ class MaskDataset(Dataset):
                             for sub_element in element:
 
                                 if sub_element.tag == 'name':
+                                    if "mask_weared_incorrect" == sub_element.text:
+                                        continue
                                     label =  sub_element.text
+
+
                                 elif sub_element.tag == 'bndbox':
                                     for bnd_element in sub_element:
                                         if bnd_element.tag == 'xmin':
@@ -154,6 +158,13 @@ class MaskDataset(Dataset):
                                             ymin = bnd_element.text
                                         if bnd_element.tag == 'ymax':
                                             ymax = bnd_element.text
+
+                            min_size = self.image_size * 0.2
+                            if (int(xmax) - int(xmin)) < int(min_size) or (int(ymax) - int(ymin)) < int(min_size):
+                                continue
+
+                            if label is None:
+                                continue
 
                             labe_info = LabelInfo(image_path, label, xmin, ymin, xmax, ymax)
                             self._label_info_list.append(labe_info)
