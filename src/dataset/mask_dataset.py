@@ -115,6 +115,9 @@ class MaskDataset(Dataset):
         :return: None
         """
 
+        # to balance dataset between classes
+        MAX_NUM_OF_WITH_MASK = 800
+        num_with_mask = 0
 
         # iterate all files in directory
         for filename in os.listdir(self.label_path):
@@ -145,6 +148,13 @@ class MaskDataset(Dataset):
                                 if sub_element.tag == 'name':
                                     if "mask_weared_incorrect" == sub_element.text:
                                         continue
+
+                                    # if "with_mask" == sub_element.text :
+                                    #     if  num_with_mask < MAX_NUM_OF_WITH_MASK:
+                                    #         num_with_mask += 1
+                                    #     else:
+                                    #         continue
+
                                     label =  sub_element.text
 
 
@@ -253,11 +263,6 @@ class MaskDataset2(Dataset):
 
         return image, int(label)
 
-
-
-# if __name__ == '__main__':
-    # facedataset = MaskDataset()
-    # facedataset._get_xml()
 
 
 

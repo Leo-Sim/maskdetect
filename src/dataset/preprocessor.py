@@ -1,3 +1,4 @@
+from idlelib.pyparse import trans
 from typing import Tuple
 import numpy as np
 from torchvision import transforms
@@ -13,12 +14,10 @@ class Preprocessor:
                 - Normalize (bool) : Apply normalization
                 - augmentation (transforms): Additional Augmentation
                 """
+        self.transforms_list = [transforms.RandomResizedCrop(image_size, scale=(0.8, 1.2))]
 
-        self.transforms_list = [transforms.Resize(image_size)]
-
-        self.transforms_list.append(transforms.RandomRotation(10),)
-        self.transforms_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2))
-
+        self.transforms_list.append(transforms.RandomHorizontalFlip())
+        self.transforms_list.append(transforms.RandomRotation(10))
         self.transforms_list.append(transforms.ToTensor())
         self.transforms_list.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
 

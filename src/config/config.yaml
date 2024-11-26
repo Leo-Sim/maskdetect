@@ -1,7 +1,7 @@
 training:
-  batch_size: 64
-  learning_rate: 0.001
-  epoch_num: 40
+  batch_size: 16
+  learning_rate: 0.0005
+  epoch_num: 35
   momentum: 0.9
   image_size: 96,96
 
@@ -10,6 +10,7 @@ data:
   dataset_path1: data/mask/dataset1
   dataset_path2: data/mask/dataset2
   dataset_path3: data/mask/dataset3
+  dataset_path4: data/mask/dataset4
   class_num: 2
 
 # images and xml labels to change into yolo train format
@@ -21,7 +22,7 @@ face_data:
 yolo_training:
   batch_size: 128
   learning_rate: 0.001
-  epoch_num: 50
+  epoch_num: 80
   momentum: 0.9
   image_size: 64,64
   data:

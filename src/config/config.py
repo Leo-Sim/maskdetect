@@ -58,6 +58,9 @@ class Config:
     def get_dataset_path3(self):
         return self._get_root_absolute_path(self.get_data_config().get('dataset_path3'))
 
+    def get_dataset_path4(self):
+        return self._get_root_absolute_path(self.get_data_config().get('dataset_path4'))
+
     def get_yolo_config(self):
         return self.config.get("yolo_training", {})
 
@@ -88,8 +91,6 @@ class Config:
     def get_face_data_path(self):
         face_data = self.config.get("face_data", {})
         return self._get_root_absolute_path(face_data.get('path'))
-
-
 
     def _get_root_absolute_path(self, relative_path):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
