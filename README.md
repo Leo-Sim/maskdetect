@@ -1,6 +1,9 @@
 # Introduction
 
 This project is conducted for detecting mask in Machine Learning class in Fall 2024. 
+In video, Yolo detects human face first, and then CNN model detects if identified people are wearing a mask or not.
+
+All development was processed in "1.0.0" branch, and merged into master after completed
 
 # Development Period
 Oct. 2024 ~ Nov. 2024
@@ -19,3 +22,4 @@ Oct. 2024 ~ Nov. 2024
    -> OpenCV was used to process test video
 
   All configuration information is defined in 'src/config/config.yaml'
+
