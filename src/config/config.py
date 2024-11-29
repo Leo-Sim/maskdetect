@@ -2,6 +2,8 @@
 import yaml
 import os
 
+# This class is for getting configuration for this project.
+# this class reads the config.yaml file.
 class Config:
     def __init__(self, config_path=None):
 

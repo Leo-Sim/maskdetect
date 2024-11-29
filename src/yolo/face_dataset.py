@@ -17,6 +17,7 @@ from mask_dataset import MaskDataset
 
 warnings.filterwarnings("ignore", category=UserWarning, module="PIL")
 
+# This class extends the custom dataset (MaskDataset) in 'src/dataset/mask_dataset'
 # Dataset for training 'face'
 # Change all labels MaskDataset to 'Face' and add extra face training data
 class FaceDataset(MaskDataset):
@@ -94,7 +95,6 @@ class FaceDataset(MaskDataset):
         labeled_file_names = set(os.listdir(labeled_image_path))
 
         # create label first
-
         # make label with mask dataset for yolo
 
 
@@ -105,9 +105,6 @@ class FaceDataset(MaskDataset):
 
         # for mask dataset, crop each face in an image and save it as separate image file
         # for face dataset, copy from original directory
-
-
-        # yolo/train/label 에서 파일이 있을 때, 복사하기
 
         # add name of labels in a set
         label_name_set = set()
@@ -145,6 +142,12 @@ class FaceDataset(MaskDataset):
                 image.save(image_target_dir)
 
     def _make_labels(self, source_path, target_path):
+        """
+
+        :param source_path: directory path for making face datasets
+        :param target_path: path to save the results
+        :return: None
+        """
 
         label_list = os.listdir(source_path)
 
@@ -180,6 +183,7 @@ class FaceDataset(MaskDataset):
                                 if sub_element.tag == 'height':
                                     img_height = float(sub_element.text)
 
+                        #  get face coordinates from image
                         if element.tag == 'object':
 
                             label = None
@@ -203,7 +207,7 @@ class FaceDataset(MaskDataset):
                                         if bnd_element.tag == 'ymax':
                                             ymax = float(bnd_element.text)
 
-                            # do not include low resolution face
+                            # filter images not to include low resolution face
                             min_size = 10
                             if (xmax - xmin) < min_size or (ymax - ymin < min_size):
                                 continue
@@ -222,6 +226,19 @@ class FaceDataset(MaskDataset):
                     print(f"Error parsing {file_path}: {e}")
 
     def calculate_relative_position(self, target_path, xmin, ymin, xmax, ymax, img_width, img_height):
+        """
+
+        retrieve square area (face) in images for training
+
+        :param target_path: image path
+        :param xmin: starting x coordinate
+        :param ymin: starting y coordinate
+        :param xmax: end x coordinate
+        :param ymax: end y coordinate
+        :param img_width: the width of the image
+        :param img_height: the height of the image
+        :return:
+        """
         # caculate center cordinates
         x_center = (xmin + xmax) / 2.0
         y_center = (ymin + ymax) / 2.0
@@ -240,6 +257,10 @@ class FaceDataset(MaskDataset):
         return f'{str(self.class_num)} {x_center} {y_center} {width} {height}'
 
     def __len__(self):
+        """
+        return length of dataset
+        :return: int
+        """
         return len(self._label_info_list)
 
     def __getitem__(self, index):

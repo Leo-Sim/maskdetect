@@ -7,7 +7,8 @@ from torchmetrics.classification import F1Score
 from torchmetrics import Accuracy, Precision, Recall
 import torch.optim as optim
 
-
+# this class extends 'L.LightningModule' to define CNN model.
+# it implemented pre-defined functions in 'LightningModule'
 class MaskDetectionModel(L.LightningModule):
     NUM_OF_CLASSES = 43
 
@@ -32,6 +33,56 @@ class MaskDetectionModel(L.LightningModule):
             nn.MaxPool2d(2, 1),
         )
 
+        # ============================================================================================
+        # these convolution and linear structures were examined before I confirm the final structure
+
+        # self.conv_layer = nn.Sequential(
+        #     nn.Conv2d(3, 32, 3, padding=1),
+        #     nn.BatchNorm2d(32),
+        #     nn.ReLU(),
+        #     nn.Conv2d(32, 64, 3, padding=1),
+        #     nn.BatchNorm2d(64),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2),
+        #     nn.Conv2d(64, 128, 3, padding=1),
+        #     nn.BatchNorm2d(128),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2),
+        #     nn.Conv2d(128, 256, 3, padding=1),
+        #     nn.BatchNorm2d(256),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2)
+        # )
+
+        # self.conv_layer = nn.Sequential(
+        #     nn.Conv2d(3, 16, 5, padding=1),
+        #     nn.BatchNorm2d(16),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2),
+        #     nn.Conv2d(16, 32, 5, padding=1),
+        #     nn.BatchNorm2d(32),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2),
+        #     nn.Conv2d(32, 64, 5, padding=1),
+        #     nn.BatchNorm2d(64),
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2))
+
+        # self.linear_layer = nn.Sequential(
+        #     nn.Dropout(0.5),
+        #     nn.Linear(conv_output_size, 128),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.5),
+        #     nn.Linear(128, num_of_classes),
+        #     nn.Sigmoid())
+
+        # self.linear_layer = nn.Sequential(
+        #     nn.Dropout(0.2),
+        #     nn.Linear(conv_output_size, num_of_classes),
+        #     nn.Sigmoid())
+
+        # ============================================================================================
+
         # After passing nn.Sequential above, it will pass FC layer to determine the final label of the image
         conv_output_size = self._get_conv_output_size(image_size)
 
@@ -48,6 +99,8 @@ class MaskDetectionModel(L.LightningModule):
         self.optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=0.01)
 
         self.loss_fn = nn.CrossEntropyLoss()
+
+        # this is to get the test results
         self.f1_value = F1Score(task="multiclass", num_classes=num_of_classes, average='macro')
         self.precision_value = Precision(task="multiclass", num_classes=num_of_classes,
                                          average='macro')
@@ -62,6 +115,11 @@ class MaskDetectionModel(L.LightningModule):
         return loss
 
     def _get_conv_output_size(self, input_size):
+        """
+        Automatically calculate the output size from convolution layer
+        :param input_size:
+        :return: int
+        """
 
         x = torch.randn(1, 3, *input_size)
         x = self.conv_layer(x)

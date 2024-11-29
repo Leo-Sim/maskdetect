@@ -11,7 +11,10 @@ from preprocessor import Preprocessor
 
 if __name__ == '__main__':
 
+    # This class is for defining preprocessing jobs for training YOLO
+    # This code is to make dataset compatible with YOLO
 
+    # get configuration from Config()
     yolo_config = Config()
     mask_dataset_path = yolo_config.get_dataset_path1()
     face_dataset_path = yolo_config.get_yolo_config_dataset_path()
@@ -23,6 +26,7 @@ if __name__ == '__main__':
     preprocessor = Preprocessor(image_size=image_size)
     transform = preprocessor.get_transforms()
 
+    # by using FaceDataset, it converts opensource datasets to YOLO format
     train_dataset = FaceDataset(face_dataset_path, mask_dataset_path, transform, 'train', image_size)
     train_dataset.export_yolo_train_format(yolo_format_export_path, face_data_path)
 

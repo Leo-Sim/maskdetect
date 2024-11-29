@@ -3,6 +3,9 @@ import random
 import os
 from PIL import Image
 
+
+# This class is to extract information in dataset2 directory.
+# I excluded this dataset because of its big size for final version of training model.
 class HighResolutionMaskDataset(Dataset):
     def __init__(self, directory_path, transform):
         super().__init__()
@@ -29,8 +32,6 @@ class HighResolutionMaskDataset(Dataset):
 
     def __getitem__(self, idx):
         image_name = self.dataset_path_list[idx]
-
-
 
         if "with-mask" in image_name:
             sub_path = "with_mask"

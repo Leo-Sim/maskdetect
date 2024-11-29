@@ -8,7 +8,7 @@ from PIL import Image
 import os
 
 
-# class that saves label information
+# class that saves label information from each image.
 class LabelInfo:
     def __init__(self, path: str, label: str, xmin: int, xmax: int, ymin: int, ymax: int):
         self._path = path
@@ -71,6 +71,13 @@ class LabelInfo:
 # An image may have multiple mask labels, so this class handle facedataset with 'label_info_list'
 class MaskDataset(Dataset):
     def __init__(self, directory_path, transform, goal, image_size):
+        """
+
+        :param directory_path: target directory path for dataset
+        :param transform: preprocessing transform
+        :param goal: the objective of this dataset -> 'train' or 'test'
+        :param image_size:
+        """
         super().__init__()
         self.image_size = image_size[0]
         self.transform = transform
@@ -149,14 +156,7 @@ class MaskDataset(Dataset):
                                     if "mask_weared_incorrect" == sub_element.text:
                                         continue
 
-                                    # if "with_mask" == sub_element.text :
-                                    #     if  num_with_mask < MAX_NUM_OF_WITH_MASK:
-                                    #         num_with_mask += 1
-                                    #     else:
-                                    #         continue
-
                                     label =  sub_element.text
-
 
                                 elif sub_element.tag == 'bndbox':
                                     for bnd_element in sub_element:
@@ -169,6 +169,7 @@ class MaskDataset(Dataset):
                                         if bnd_element.tag == 'ymax':
                                             ymax = bnd_element.text
 
+                            # filter small images not to include in the training dataset
                             min_size = self.image_size * 0.2
                             if (int(xmax) - int(xmin)) < int(min_size) or (int(ymax) - int(ymin)) < int(min_size):
                                 continue
@@ -218,7 +219,8 @@ class MaskDataset(Dataset):
         return tensor_image, image_label
 
 
-
+# This class extends Dataset.
+# it is used dataset that has "with_mask" and "without_mask" directories
 class MaskDataset2(Dataset):
     def __init__(self, directory_path, transform, goal):
         super().__init__()
@@ -234,6 +236,11 @@ class MaskDataset2(Dataset):
         self._add_image_path_to_list()
 
     def _add_image_path_to_list(self):
+        """
+        Iterate each images in "with_mask" and "without_mask" directories,
+        and save image information
+        :return:
+        """
 
         # add paths of image with mask to list
         for image_name in os.listdir(self.mask_paths):

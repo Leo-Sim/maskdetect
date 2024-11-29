@@ -1,7 +1,7 @@
 
 import yt_dlp
 
-video_url = 'https://www.youtube.com/watch?v=wxmmrwYT2SE'
+# This file is to download youtube video for testing.
 
 ydl_opts = {
     'outtmpl': 'video/%(title)s.%(ext)s',
