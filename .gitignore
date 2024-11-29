@@ -4,3 +4,4 @@
 ./venv
 /.idea/
 src/train/lightning_logs
+src/video/video

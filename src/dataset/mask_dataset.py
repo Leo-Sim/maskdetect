@@ -8,7 +8,7 @@ from PIL import Image
 import os
 
 
-# class that saves label information
+# class that saves label information from each image.
 class LabelInfo:
     def __init__(self, path: str, label: str, xmin: int, xmax: int, ymin: int, ymax: int):
         self._path = path
@@ -68,11 +68,18 @@ class LabelInfo:
 
 
 # Save all image and label information in '_label_info_list'.
-# An image may have multiple mask labels, so this class handle dataset with 'label_info_list'
+# An image may have multiple mask labels, so this class handle facedataset with 'label_info_list'
 class MaskDataset(Dataset):
-    def __init__(self, directory_path, transform, goal):
-        super().__init__()
+    def __init__(self, directory_path, transform, goal, image_size):
+        """
 
+        :param directory_path: target directory path for dataset
+        :param transform: preprocessing transform
+        :param goal: the objective of this dataset -> 'train' or 'test'
+        :param image_size:
+        """
+        super().__init__()
+        self.image_size = image_size[0]
         self.transform = transform
 
         self.directory_path = directory_path + os.sep + goal
@@ -115,6 +122,9 @@ class MaskDataset(Dataset):
         :return: None
         """
 
+        # to balance dataset between classes
+        MAX_NUM_OF_WITH_MASK = 800
+        num_with_mask = 0
 
         # iterate all files in directory
         for filename in os.listdir(self.label_path):
@@ -143,7 +153,11 @@ class MaskDataset(Dataset):
                             for sub_element in element:
 
                                 if sub_element.tag == 'name':
+                                    if "mask_weared_incorrect" == sub_element.text:
+                                        continue
+
                                     label =  sub_element.text
+
                                 elif sub_element.tag == 'bndbox':
                                     for bnd_element in sub_element:
                                         if bnd_element.tag == 'xmin':
@@ -155,21 +169,25 @@ class MaskDataset(Dataset):
                                         if bnd_element.tag == 'ymax':
                                             ymax = bnd_element.text
 
+                            # filter small images not to include in the training dataset
+                            min_size = self.image_size * 0.2
+                            if (int(xmax) - int(xmin)) < int(min_size) or (int(ymax) - int(ymin)) < int(min_size):
+                                continue
+
+                            if label is None:
+                                continue
+
                             labe_info = LabelInfo(image_path, label, xmin, ymin, xmax, ymax)
                             self._label_info_list.append(labe_info)
 
                 except etree.XMLSyntaxError as e:
                     print(f"Error parsing {file_path}: {e}")
 
-    def __len__(self):
-        return len(self._label_info_list)
-
-    def __getitem__(self, index):
-
-        label_info = self._label_info_list[index]
-
-        image = Image.open(self.image_path + os.sep + label_info.path)
-        image_label = self._label_mapping[label_info.label]
+    def get_cropped_image(self, image, label_info):
+        """
+        :parameter image
+        :parameter label_info: label information
+        """
 
         image_xmin = label_info.xmin
         image_xmax = label_info.xmax
@@ -177,6 +195,19 @@ class MaskDataset(Dataset):
         image_ymax = label_info.ymax
 
         cropped_image = image.crop((image_xmin, image_xmax, image_ymin, image_ymax))
+        return cropped_image
+
+    def __len__(self):
+        return len(self._label_info_list)
+
+
+    def __getitem__(self, index):
+
+        label_info = self._label_info_list[index]
+
+        image = Image.open(self.image_path + os.sep + label_info.path)
+        cropped_image = self.get_cropped_image(image, label_info)
+        image_label = self._label_mapping[label_info.label]
 
         # if image is RGBA, convert it into RGB
         if image.mode != "RGB":
@@ -188,9 +219,57 @@ class MaskDataset(Dataset):
         return tensor_image, image_label
 
 
-# if __name__ == '__main__':
-    # dataset = MaskDataset()
-    # dataset._get_xml()
+# This class extends Dataset.
+# it is used dataset that has "with_mask" and "without_mask" directories
+class MaskDataset2(Dataset):
+    def __init__(self, directory_path, transform, goal):
+        super().__init__()
+        self.transform = transform
+        self.directory_path = directory_path
+
+        self.image_info_list = []
+
+        self.mask_paths = os.path.join(directory_path, goal, "with_mask")
+
+        self.without_mask_path = os.path.join(directory_path, goal, "without_mask")
+
+        self._add_image_path_to_list()
+
+    def _add_image_path_to_list(self):
+        """
+        Iterate each images in "with_mask" and "without_mask" directories,
+        and save image information
+        :return:
+        """
+
+        # add paths of image with mask to list
+        for image_name in os.listdir(self.mask_paths):
+            image_path = os.path.join(self.mask_paths, image_name)
+            label = "1"
+            self.image_info_list.append(LabelInfo(image_path, label, 0, 0, 0, 0))
+
+        for image_name  in os.listdir(self.without_mask_path):
+            image_path = os.path.join(self.without_mask_path, image_name)
+            label = "0"
+            self.image_info_list.append(LabelInfo(image_path, label, 0, 0, 0, 0))
+
+    def __len__(self):
+        return len(self.image_info_list)
+
+    def __getitem__(self, index):
+
+        label_info = self.image_info_list[index]
+        image = Image.open(label_info.path)
+        label = label_info.label
+
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, int(label)
+
 
 
 
